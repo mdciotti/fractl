@@ -1,0 +1,480 @@
+[
+	{
+		"name": "Dragon Curve",
+		"variables": "XY",
+		"constants": "F+-",
+		"axiom": "FX",
+		"angle": 90,
+		"rules": {
+			"X": "X+YF",
+			"Y": "FX-Y"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Terdragon Curve",
+		"variables": "F",
+		"constants": "+-",
+		"axiom": "F",
+		"angle": 120,
+		"rules": {"F": "F+F-F"},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Lévy C Curve",
+		"variables": "F",
+		"constants": "+-",
+		"axiom": "F",
+		"angle": 45,
+		"rules": {"F": "+F--F+"},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Sierpiński Arrowhead Curve",
+		"variables": "AB",
+		"constants": "F+-",
+		"axiom": "A",
+		"angle": 60,
+		"rules": {
+			"A": "B+A+B",
+			"B": "A-B-A"
+		},
+		"actions": {
+			"A": "forward",
+			"B": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Sierpiński Triangle",
+		"variables": "FG",
+		"constants": "+-",
+		"axiom": "F-G-G",
+		"angle": 120,
+		"rules": {
+			"F": "F-G+F+G-F",
+			"G": "GG"
+		},
+		"actions": {
+			"F": "forward",
+			"G": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Sierpiński Carpet",
+		"variables": "FG",
+		"constants": "+-",
+		"axiom": "F",
+		"angle": 90,
+		"rules": {
+			"F": "F+F-F-F-G+F+F+F-F",
+			"G": "GGG"
+		},
+		"actions": {
+			"F": "forward",
+			"G": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Sierpiński Median Curve",
+		"variables": "LR",
+		"constants": "F+-",
+		"axiom": "L--F--L--F",
+		"angle": 45,
+		"rules": {
+			"L": "+R-F-R+",
+			"R": "-L+F+L-"
+		},
+		"actions": {
+			"F": "forward",
+			"L": "forward",
+			"R": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Koch Curve",
+		"variables": "F",
+		"constants": "+-",
+		"axiom": "F",
+		"angle": 90,
+		"rules": {"F": "F+F-F-F+F"},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Koch Snowflake",
+		"variables": "F",
+		"constants": "+-",
+		"axiom": "F++F++F",
+		"angle": 60,
+		"rules": {
+			"F": "F-F++F-F",
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Fractal Plant",
+		"variables": "XF",
+		"constants": "+-[]",
+		"axiom": "X",
+		"angle": 25,
+		"rules": {
+			"X": "F-[[X]+X]+F[+FX]-X",
+			"F": "FF"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Fractal Plant 2",
+		"variables": "1",
+		"constants": "+-[]",
+		"axiom": "1",
+		"angle": 22.5,
+		"rules": {
+			"1": "11+[+1-1-1]-[-1+1+1]"
+		},
+		"actions": {
+			"1": "forward",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Fractal Tree",
+		"variables": "AB",
+		"constants": "+-[]",
+		"axiom": "A",
+		"angle": 45,
+		"rules": {
+			"A": "B[-A]+A",
+			"B": "BB"
+		},
+		"actions": {
+			"A": "forward",
+			"B": "forward",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Hilbert Curve",
+		"variables": "AB",
+		"constants": "F+-",
+		"axiom": "+AF-BFB-FA+", // same as rule B
+		"angle": 90,
+		"rules": {
+			"A": "-BF+AFA+FB-",
+			"B": "+AF-BFB-FA+"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Moore Curve",
+		"variables": "LR",
+		"constants": "F+-",
+		"axiom": "LFL+F+LFL",
+		"angle": 90,
+		"rules": {
+			"L": "-RF+LFL+FR-",
+			"R": "+LF-RFR-FL+"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Peano Curve",
+		"variables": "AB",
+		"constants": "F+-",
+		"axiom": "AFBFA+F+BFAFB-F-AFBFA",
+		"angle": 90,
+		"rules": {
+			"A": "AFBFA+F+BFAFB-F-AFBFA",
+			"B": "BFAFB-F-AFBFA+F+BFAFB"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Gosper Curve",
+		"variables": "XY",
+		"constants": "F+-",
+		"axiom": "XF",
+		"angle": 60,
+		"rules": {
+			"X": "X+YF++YF-FX--FXFX-YF+",
+			"Y": "-FX+YFYF++YF+FX--FX-Y"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Gosper Island",
+		"variables": "F",
+		"constants": "+-",
+		"axiom": "F+F+F+F+F+F+",
+		"angle": 60,
+		"rules": {
+			"F": "F+F-F"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Penrose Tiling",
+		"variables": "67891",
+		"constants": "+-[]",
+		"axiom": "[7]++[7]++[7]++[7]++[7]",
+		"angle": 36,
+		"rules": {
+			"6": "81++91----71[-81----61]++",
+			"7": "+81--91[---61--71]+",
+			"8": "-61++71[+++81++91]-",
+			"9": "--81++++61[+91++++71]--71",
+			"1": ""
+		},
+		"actions": {
+			"1": "forward",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Cross Curve",
+		"variables": "6",
+		"constants": "1+-",
+		"axiom": "1+61+1+61",
+		"angle": 90,
+		"rules": {
+			"6": "61-1+1-61+1+61-1+1-6"
+		},
+		"actions": {
+			"1": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Snake Curve",
+		"variables": "6",
+		"constants": "1+-",
+		"axiom": "+6++6",
+		"angle": 45,
+		"rules": {
+			"6": "616++616"
+		},
+		"actions": {
+			"1": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Campos Curve",
+		"variables": "61",
+		"constants": "+-",
+		"axiom": "+6++6",
+		"angle": 45,
+		"rules": {
+			"6": "616++616",
+			"1": "11"
+		},
+		"actions": {
+			"1": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Spiral Curve",
+		"variables": "678",
+		"constants": "1+-[]",
+		"axiom": "6666",
+		"angle": 15,
+		"rules": {
+			"6": "7+7+7+7+7+7+",
+			"7": "[1+1+1+1[---7-8]+++++1++++++++1-1-1-1]",
+			"8": "[1+1+1+1[---8]+++++1++++++++1-1-1-1]"
+		},
+		"actions": {
+			"1": "forward",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Starry",
+		"variables": "F",
+		"constants": "+-",
+		"axiom": "F-F++F-F++F-F++F-F++F-F",
+		"angle": 72,
+		"rules": {
+			"F": "F-F++F-F"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Cristal",
+		"variables": "1",
+		"constants": "+-[]",
+		"axiom": "[1]+[1]+[1]+[1]+[1]+[1]",
+		"angle": 60,
+		"rules": {
+			"1": "111[1][+[1]+1][-[1]-1]"
+		},
+		"actions": {
+			"1": "forward",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Hexagonal Kolam",
+		"variables": "XY",
+		"constants": "F+-[]",
+		"axiom": "X",
+		"angle": 60,
+		"rules": {
+			"X": "[-F+F[Y]+F][+F-F[X]-F]",
+			"Y": "[-F+F[Y]+F][+F-F-F]"
+		},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Mango Kolam",
+		"variables": "AZ",
+		"constants": "Ff+-[]",
+		"axiom": "A---A",
+		"angle": 60,
+		"rules": {
+			"A": "f-F+Z+F-fA",
+			"Z": "F-FF-F--[--Z]F-FF-F--F-FF-F--"
+		},
+		"actions": {
+			"F": "forward",
+			"f": "hop",
+			"+": "turn_right",
+			"-": "turn_left",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Islands & Lakes",
+		"variables": "Ff",
+		"constants": "+-",
+		"axiom": "F-F-F-F",
+		"angle": 90,
+		"rules": {
+			"F": "F-f+FF-F-FF-Ff-FF+f-FF+F+FF+Ff+FFF",
+			"f": "ffffff"
+		},
+		"actions": {
+			"F": "forward",
+			"f": "hop",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	},
+	{
+		"name": "Thread Plant",
+		"variables": "BPT",
+		"constants": "frqut[]",
+		"axiom": "f",
+		"angle": 90,
+		"rules": {
+			"B": "1:TB, 1:P[rB][qB]",
+			"P": "1:TP, 1:T, 1:TT, 1:TTT",
+			"T": "1:frfrfrfr, 1:fqfqfqfq, 1:fufufufu, 1:ftftftft"
+		},
+		"actions": {
+			"f": "forward",
+			"r": "rotate 10",
+			"q": "rotate -10",
+			"t": "rotate 13",
+			"u": "rotate -13",
+			"[": "set_home",
+			"]": "go_home"
+		}
+	},
+	{
+		"name": "Random Walk",
+		"variables": "F",
+		"constants": "+-",
+		"axiom": "F",
+		"angle": 60,
+		"rules": {"F": "1:F+F, 1:F-F"},
+		"actions": {
+			"F": "forward",
+			"+": "turn_right",
+			"-": "turn_left"
+		}
+	}
+]

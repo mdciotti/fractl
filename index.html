@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Fractl</title>
+        <style type="text/css">
+            body { margin: 0; }
+            canvas { display: block; }
+            .dg.main.a {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                -o-user-select: none;
+                user-select: none;
+            }
+        </style>
+        <script type="text/javascript" src="dat.gui.min.js"></script>
+        <script type="text/javascript">
+            var SQRT2_2 = Math.sqrt(2) / 2;
+            function wrap(n,m) { return n < 0 ? m + (n % m) : n % m; }
+            
+            var Fractl = {
+                animating: false,
+                timer: null,
+                el: null,
+                ctx: null,
+                width: null,
+                height: null,
+                iteration: 0,
+                maxIterations: 15,
+                currentIterations: 0,
+                size: 640,
+                scale: null,
+                zoom: 1,
+                animationSpeed: 1000,
+                fade: 0.05,
+                lineColor: "#FF0000",
+                background: "#000000"
+            };
+            Fractl.invert = function (seq) {
+                return seq.split('').map(function(c){return c=='R'?'L':c=='L'?'R':c;}).join('');
+            };
+            Fractl.reverse = function (seq) {
+                return seq.split('').reverse().join('');
+            };
+            Fractl.step = function (seq) {
+                return seq + "R" + this.reverse(this.invert(seq));
+            };
+            Fractl.recurse = function (n) {
+                var seq = "";
+                while (n--) seq = this.step(seq);
+                return seq;
+            };
+            Fractl.render = function (seq) {
+                var w = this.width;
+                var h = this.height;
+                var ctx = this.ctx;
+                this.ctx.fillStyle = this.background;
+                this.ctx.strokeStyle = this.lineColor;
+                ctx.save();
+                ctx.globalAlpha = 1 - this.fade;
+                ctx.fillRect(-w >> 1, -h >> 1, w, h);
+                ctx.restore();
+                ctx.save();
+                this.ctx.translate(this.offsetX, this.offsetY);
+                ctx.beginPath();
+                var x = 0.5, y = 0.5;
+                ctx.moveTo(x, y);
+                var d = 1; // 0 = up, 1 = right, 2 = down, 3 = left
+                ctx.rotate(this.iteration * Math.PI / 4);
+                ctx.lineTo(x += this.scale, y);
+                
+                for (var i = 0, l = seq.length; i < l; i++) {
+                    d = seq[i] === "R" ? wrap(d+1,4) : wrap(d-1,4);
+                    switch (d) {
+                        case 0: ctx.lineTo(x, y += this.scale); break;
+                        case 1: ctx.lineTo(x += this.scale, y); break;
+                        case 2: ctx.lineTo(x, y -= this.scale); break;
+                        case 3: ctx.lineTo(x -= this.scale, y); break;
+                    }
+                }
+                ctx.stroke();
+                ctx.restore();
+            };
+            Fractl.create = function () {
+                this.offsetX = -this.size/2;
+                this.offsetY = -this.size/4;
+                this.scale = this.size * Math.pow(SQRT2_2, this.currentIterations);
+                this.iteration = this.currentIterations;
+                this.render(this.recurse(this.currentIterations));
+            };
+            Fractl.createAll = function () {
+                var n = this.currentIterations;
+                while (n--) this.create(n);
+            };
+            Fractl.animate = function () {
+                if (this.animating) {
+                    this.animating = false;
+                    clearInterval(this.timer);
+                } else {
+                    this.animating = true;
+                    this.timer = setInterval(this.iterate.bind(this), this.animationSpeed);
+                }
+            };
+            Fractl.iterate = function () {
+                this.currentIterations = wrap(this.currentIterations+1, this.maxIterations);
+                this.create();
+            };
+            Fractl.zoomIn = function () {
+                this.zoom *= 1.1;
+                // this.ctx.translate(-this.offsetX, -this.offsetY);
+                this.ctx.scale(1.1, 1.1);
+                // this.ctx.translate(this.offsetX, this.offsetY);
+                this.create();
+            };
+            Fractl.zoomOut = function () {
+                this.zoom /= 1.1;
+                // this.ctx.translate(-this.offsetX, -this.offsetY);
+                this.ctx.scale(1/1.1, 1/1.1);
+                // this.ctx.translate(this.offsetX, this.offsetY);
+                this.create();
+            };
+            Fractl.cleanup = function () {
+                this.width = this.el.width = window.innerWidth;
+                this.height = this.el.height = window.innerHeight;
+                this.ctx.globalAlpha = 1;
+                this.ctx.fillStyle = this.background;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                this.ctx.scale(1, -1);
+                this.ctx.translate(this.width >> 1, -this.height >> 1);
+                this.ctx.strokeStyle = this.lineColor;
+                this.ctx.lineJoin = "miter";
+                this.globalCompositeOperation = "multiply";
+                this.create();
+            };
+            Fractl.init = function () {
+                this.el = document.querySelector('canvas');
+                this.ctx = this.el.getContext('2d');
+                this.cleanup();
+            };
+        </script>
+    </head>
+    <body>
+        <canvas></canvas>
+        <script type="application/javascript">
+            Fractl.init();
+
+            var gui = new dat.GUI();
+            gui.add(Fractl, 'size').min(0).max(1000).step(1);
+            gui.add(Fractl, 'maxIterations').min(0).max(20).step(1);
+            gui.add(Fractl, 'fade').min(0).max(1).step(0.05);
+            gui.addColor(Fractl, 'lineColor');
+            gui.addColor(Fractl, 'background');
+            gui.add(Fractl, 'animationSpeed', {Slow: 2000, Normal: 1000, Fast: 500});
+            gui.add(Fractl, 'animate');
+            gui.add(Fractl, 'cleanup');
+            gui.add(Fractl, 'iterate');
+            gui.add(Fractl, 'zoomIn');
+            gui.add(Fractl, 'zoomOut');
+        </script>
+    </body>
+</html>

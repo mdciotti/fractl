@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Fractl</title>
+        <style type="text/css">
+            body { margin: 0; }
+            canvas { display: block; }
+            .dg.main.a {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                -o-user-select: none;
+                user-select: none;
+            }
+        </style>
+        <script type="text/javascript" src="dat.gui.min.js"></script>
+        <script type="text/javascript">
+            // RequestAnimationFrame Polyfill (courtesy of Erik Möller)
+            (function() {
+                var lastTime = 0;
+                var vendors = ['webkit', 'moz'];
+                for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+                    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+                    window.cancelAnimationFrame =
+                      window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+                }
+
+                if (!window.requestAnimationFrame)
+                    window.requestAnimationFrame = function(callback, element) {
+                        var currTime = new Date().getTime();
+                        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                        var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+                          timeToCall);
+                        lastTime = currTime + timeToCall;
+                        return id;
+                    };
+
+                if (!window.cancelAnimationFrame)
+                    window.cancelAnimationFrame = function(id) {
+                        clearTimeout(id);
+                    };
+            }());;
+
+            var Fractl = (function () {
+                var SQRT2_2 = Math.sqrt(2) / 2;
+                function wrap(n, m) { return n < 0 ? m + (n % m) : n % m; }
+                
+                function Fractl() {
+                    this.type = "dragon";
+                    this.style = "round";
+                    this.fill = false;
+                    this.dragging = false;
+                    this.mouseX = null;
+                    this.mouseY = null;
+                    this.mousedX = 0;
+                    this.mousedY = 0;
+                    this.animating = false;
+                    this.timer = null;
+                    this.el = null;
+                    this.ctx = null;
+                    this.width = null;
+                    this.height = null;
+                    this.iteration = 0;
+                    this.maxIterations = 15;
+                    this.size = 640;
+                    this.zoom = 1;
+                    this.unit = 640;
+                    this.animationSpeed = 1000;
+                    this.fade = 0.00;
+                    this.lineColor = "#00ACED";
+                    this.background = "#222222";
+                    this.sequence = "";
+                }
+
+                Fractl.prototype.fold = function (seq) {
+                    // Returns next sequence
+                    switch (this.type) {
+                        case "dragon":
+                            // DRAGON
+                            // Can be thought of as a "fold" (much like paper)
+                            // nextSeq = currentSeq + "R" + reverse(invert(currentSeq))
+                            // For some reason, directly manipulating this.sequence causes problems
+                            // in some places so we just return a new variable for now
+                            return seq + "R" + seq.split('').map(function(c){return c=='R'?'L':c=='L'?'R':c;}).reverse().join('');
+                        case "triangle":
+                            // Makes a triangle.
+                            return seq.split('').map(function(c){return c=='R'?'L':c=='L'?'R':'';}).join('') + "R" + seq.split('').reverse().join('');
+                        case "sierpinsky":
+                            return seq.split('').map(function(c){return c=='R'?'L':c=='L'?'R':'';}).reverse().join('') + "R" + seq.split('').reverse().join('');
+                        default:
+                            return seq;
+                    }
+                };
+                Fractl.prototype.unfold = function (seq) {
+                    switch (this.type) {
+                        case "dragon":
+                            // Returns previous sequence (half of the original sequence minus one)
+                            return seq.substr(0, seq.length - 1 >> 1);
+                        case "triangle":
+                            return seq.substr(seq.length + 1 >> 1).split('').reverse().join('');
+                        default:
+                            return seq;
+                    }
+                };
+                Fractl.prototype.render = function () {
+                    var w = this.width / this.zoom,
+                        h = this.height / this.zoom,
+                        x = 0, y = 0,
+                        dir = 1, // 0 = up, 1 = right, 2 = down, 3 = left
+                        ctx = this.ctx,
+                        i, n = this.sequence.length;
+
+                    // Set styles
+                    ctx.fillStyle = this.background;
+                    ctx.strokeStyle = this.lineColor;
+                    // Draw background
+                    ctx.save();
+                    ctx.globalAlpha = 1 - this.fade;
+                    ctx.fillRect(-w/2, -h/2, w, h);
+                    ctx.restore();
+                    // Begin sequence path
+                    ctx.save();
+                    // ctx.globalCompositeOperation = "lighter";
+                    ctx.fillStyle = this.lineColor;
+                    ctx.translate(this.offsetX, this.offsetY);
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    switch (this.type) {
+                        case "dragon": ctx.rotate(this.iteration * Math.PI / 4); break;
+                        case "triangle": ctx.rotate((this.iteration % 2) * Math.PI / 4); break;
+                        default: break;
+                    }
+                    
+                    if (this.style === "square") {
+                        // Initial line
+                        ctx.lineTo(x += this.unit, y);
+                        for (i = 0; i < n; i++) {
+                            // Set direction
+                            dir = this.sequence[i] === "R" ? wrap(dir + 1, 4) : wrap(dir - 1, 4);
+                            switch (dir) {
+                                case 0: ctx.lineTo(x, y += this.unit); break;
+                                case 1: ctx.lineTo(x += this.unit, y); break;
+                                case 2: ctx.lineTo(x, y -= this.unit); break;
+                                case 3: ctx.lineTo(x -= this.unit, y); break;
+                            }
+                        }
+                    } else if (this.style === "round") {
+                        x += this.unit;
+                        var halfUnit = this.unit / 2;
+                        for (i = 0; i < n; i++) {
+                            dir = this.sequence[i] === "R" ? wrap(dir + 1, 4) : wrap(dir - 1, 4);
+                            switch (dir) {
+                                case 0: ctx.arcTo(x, y, x, y += this.unit, halfUnit); break;
+                                case 1: ctx.arcTo(x, y, x += this.unit, y, halfUnit); break;
+                                case 2: ctx.arcTo(x, y, x, y -= this.unit, halfUnit); break;
+                                case 3: ctx.arcTo(x, y, x -= this.unit, y, halfUnit); break;
+                            }
+                        }
+                        ctx.lineTo(x, y);
+                    }
+                    if (this.fill) ctx.fill();
+                    else ctx.stroke();
+                    ctx.restore();
+                };
+                Fractl.prototype.animate = function () {
+                    // Toggle between animated and manual iteration
+                    if (this.animating) {
+                        this.animating = false;
+                        clearInterval(this.timer);
+                    } else {
+                        this.animating = true;
+                        this.timer = setInterval(this.iterate.bind(this), this.animationSpeed);
+                    }
+                };
+                Fractl.prototype.iterate = function () {
+                    if (this.iteration === this.maxIterations) {
+                        // Reached maximum iterations, reset
+                        this.iteration = 0;
+                        this.sequence = "";
+                        this.unit = this.size;
+                    } else {
+                        this.iteration++;
+                        // Calculate next iteration
+                        this.sequence = this.fold(this.sequence);
+                        // Shrink unit size to preserve entire fractal size
+                        this.unit *= SQRT2_2;
+                    }
+                    this.render();
+                };
+                Fractl.prototype.regress = function () {
+                    // Do not regress futher (nor loop around) upon reaching iteration 0
+                    if (this.iteration === 0) return;
+                    this.iteration--;
+                    // Return to previous iteration
+                    this.sequence = this.unfold(this.sequence);
+                    // Enlarge unit size to preserve entire fractal size
+                    this.unit /= SQRT2_2;
+                    this.render();
+                };
+                function zf(t, d) {
+                    // Returns the zoom factor from time percent
+                    // Using a cubic easing function
+                    // t = elapsed time { t | 0 <= t <= d }
+                    // d = duration
+                    return 1 + 0.02*Math.pow(1-t/d, 3);
+                }
+                Fractl.prototype.zoomIn = function () {
+                    var self = this;
+                    var id, d = 500, factor;
+                    var t0 = Date.now();
+                    function zoom() {
+                        id = window.requestAnimationFrame(zoom);
+                        factor = zf(Date.now() - t0, d);
+                        self.zoom *= factor;
+                        self.ctx.scale(factor, factor);
+                        self.render();
+                    }
+                    zoom();
+                    window.setTimeout(function () {
+                        window.cancelAnimationFrame(id);
+                    }, d);
+                };
+                Fractl.prototype.zoomOut = function () {
+                    var self = this;
+                    var id, d = 500, factor;
+                    var t0 = Date.now();
+                    function zoom() {
+                        id = window.requestAnimationFrame(zoom);
+                        factor = zf(Date.now() - t0, d);
+                        self.zoom /= factor;
+                        self.ctx.scale(1/factor, 1/factor);
+                        self.render();
+                    }
+                    zoom();
+                    window.setTimeout(function () {
+                        window.cancelAnimationFrame(id);
+                    }, d);
+                };
+                function easeOutExpo(t, b, c, d) {
+                    return (t==d) ? b+c : c * (-Math.pow(2, -10 * t/d) + 1) + b;
+                }
+                Fractl.prototype.zoomTo = function (z) {
+                    var t0 = Date.now(),
+                        d = 500,
+                        id, newZoom, self = this,
+                        dz = z - self.zoom;
+                    function zoom() {
+                        id = window.requestAnimationFrame(zoom);
+                        newZoom = easeOutExpo(Date.now() - t0, self.zoom, dz, d);
+                        self.zoom = newZoom;
+                        // self.ctx.scale();
+                    }
+
+                };
+                Fractl.prototype.cleanup = function () {
+                    // Restore fractal render to original settings
+                    this.width = this.el.width = window.innerWidth;
+                    this.height = this.el.height = window.innerHeight;
+                    this.ctx.globalAlpha = 1;
+                    this.ctx.fillStyle = this.background;
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    this.ctx.scale(1, -1);
+                    this.ctx.translate(this.width / 2, -this.height / 2);
+                    this.ctx.strokeStyle = this.lineColor;
+                    this.ctx.lineJoin = "miter";
+                    // this.ctx.globalCompositeOperation = "multiply";
+                    this.offsetX = -this.size/2;
+                    this.offsetY = -this.size/4;
+                    this.zoom = 1;
+                    this.unit = this.size * Math.pow(SQRT2_2, this.iteration);
+                    this.render();
+                };
+                Fractl.prototype.init = function () {
+                    this.el = document.querySelector('canvas');
+                    this.ctx = this.el.getContext('2d');
+                    this.cleanup();
+                    // this.unit = this.size * Math.pow(SQRT2_2, this.iteration);
+                    var self = this;
+
+                    this.el.addEventListener('mousedown', function (e) {
+                        self.dragging = true;
+                        self.mouseX = e.clientX;
+                        self.mouseY = e.clientY;
+                    }, false);
+                    document.addEventListener('mousemove', function (e) {
+                        if (!self.dragging) return;
+                        self.offsetX += (e.clientX - self.mouseX) / self.zoom;
+                        self.offsetY -= (e.clientY - self.mouseY) / self.zoom;
+                        self.mouseX = e.clientX;
+                        self.mouseY = e.clientY;
+                        self.render();
+                    }, false);
+                    document.addEventListener('mouseup', function (e) {
+                        self.dragging = false;
+                    }, false);
+                    document.addEventListener('keyup', function (e) {
+                        // console.log(e);
+                        switch (e.which) {
+                            case 37: f1.regress(); break;
+                            case 39: f1.iterate(); break;
+                            case 38: f1.zoomIn(); break;
+                            case 40: f1.zoomOut(); break;
+                            default: break;
+                        }
+                    }, false);
+                };
+                return Fractl;
+            })();
+        </script>
+    </head>
+    <body>
+        <canvas></canvas>
+        <script type="text/javascript">
+            var f1 = new Fractl();
+            f1.init();
+
+            var gui = new dat.GUI();
+            gui.add(f1, 'type', {Dragon: "dragon", Triangle: "triangle"}).onChange(function (val) { this.ieration = 0; this.sequence = ""; f1.render(); });
+            gui.add(f1, 'style', {Square: "square", Round: "round"}).onChange(function (val) { f1.render(); });
+            gui.add(f1, 'fill').onChange(function (val) { f1.render(); });
+            gui.add(f1, 'size').min(0).max(1000).step(1).onChange(function (val) { f1.cleanup(); });
+            gui.add(f1, 'maxIterations').min(0).max(20).step(1);
+            gui.add(f1, 'fade').min(0).max(1).step(0.05);
+            gui.addColor(f1, 'lineColor').onChange(function (val) { f1.render(); });
+            gui.addColor(f1, 'background').onChange(function (val) { f1.render(); });
+            gui.add(f1, 'animationSpeed', {Slow: 2000, Normal: 1000, Fast: 500});
+            gui.add(f1, 'animate');
+            gui.add(f1, 'cleanup');
+            gui.add(f1, 'iterate');
+            gui.add(f1, 'zoomIn');
+            gui.add(f1, 'zoomOut');
+        </script>
+    </body>
+</html>
