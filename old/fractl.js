@@ -2,15 +2,12 @@
 var FractalViewer = {
 	model: null,
 	ctx: null,
-	zctx: null,
 	gui: null,
 	editor: null,
 	mouseX: 0,
 	mouseY: 0,
 	offsetX: 0,
 	offsetY: 0,
-	viewWidth: 0,
-	viewHeight: 0,
 	dragging: false,
 	zoom: 1,
 	guiState: {}
@@ -24,10 +21,9 @@ function zf(t, d) {
     return 1 + 0.02*Math.pow(1-t/d, 3);
 }
 
-FractalViewer.zoomIn_old = function (d) {
+FractalViewer.zoomIn = function () {
     var self = this;
-    var id, factor;
-    var d = d || 500;
+    var id, d = 500, factor;
     var t0 = Date.now();
     function zoom() {
         id = window.requestAnimationFrame(zoom);
@@ -42,52 +38,9 @@ FractalViewer.zoomIn_old = function (d) {
     }, d);
 };
 
-FractalViewer.zoomIn = function (d) {
-    var self = this;
-    var d = d || 500;
-    var ow = self.ctx.canvas.width, oh = self.ctx.canvas.height;
-
-    if (self.zctx.canvas.classList.contains('zoom-out')) return;
-
-    self.zctx.canvas.style.zIndex = 1;
-    self.zctx.drawImage(self.ctx.canvas, 0, 0, ow, oh);
-    self.zctx.canvas.classList.add('zoom-in');
-    self.ctx.fillStyle = self.model.options.background;
-    self.ctx.fillRect(0, 0, ow, oh);
-    self.zoom *= 1.25;
-
-    window.setTimeout(function () {
-        self.model.render();
-    	self.zctx.canvas.classList.remove('zoom-in');
-    	self.zctx.canvas.style.zIndex = -1;
-    }, d);
-};
-
-FractalViewer.zoomOut = function (d) {
-    var self = this;
-    var d = d || 500;
-    var ow = self.ctx.canvas.width, oh = self.ctx.canvas.height;
-
-    if (self.zctx.canvas.classList.contains('zoom-in')) return;
-
-    self.zctx.canvas.style.zIndex = 1;
-    self.zctx.drawImage(self.ctx.canvas, 0, 0, ow, oh);
-    self.zctx.canvas.classList.add('zoom-out');
-    self.ctx.fillStyle = self.model.options.background;
-    self.ctx.fillRect(0, 0, ow, oh);
-    self.zoom *= 0.8;
-
-    window.setTimeout(function () {
-        self.model.render();
-    	self.zctx.canvas.classList.remove('zoom-out');
-    	self.zctx.canvas.style.zIndex = -1;
-    }, d);
-};
-
-FractalViewer.zoomOut_old = function (d) {
+FractalViewer.zoomOut = function () {
     var self = this;
     var id, d = 500, factor;
-    var d = d || 500;
     var t0 = Date.now();
     function zoom() {
         id = window.requestAnimationFrame(zoom);
@@ -127,19 +80,17 @@ FractalViewer.initialize = function () {
 	newFractal.compile = function () {
 		// console.log(FractalViewer.editor.getSaveObject());
 		// Compile parameters into L-System
-		var models = JSON.parse(FractalViewer.LSModels_JSON);
-		var fractal = _.findWhere(models, { "name": newFractal.name });
-		var model = FractalViewer.model = new LS({ parameters: fractal });
+		var model = FractalViewer.model = new LS({ parameters: newFractal });
 		model.setContext(FractalViewer.ctx).render();
 
 		// Create manipulation GUI
 		if (FractalViewer.gui !== null) FractalViewer.gui.destroy();
 		FractalViewer.gui = new dat.GUI();
 
-		FractalViewer.gui.add(model, 'sequence').listen().onChange(function () { model.render(); });
 		FractalViewer.gui.add(model, 'iterate');
 		FractalViewer.gui.add(model, 'regress');
 		FractalViewer.gui.add(model, 'resetViewport');
+		FractalViewer.gui.add(model, 'showString');
 
 		var style = FractalViewer.gui.addFolder('Style');
 		style.add(model.options, 'fill').onChange(function () { model.render(); });
@@ -150,49 +101,42 @@ FractalViewer.initialize = function () {
 	};
 
 	// Create GUI
-	function updateRulesFolder(folder, preset) {
+	function updateRulesFolder(folder) {
 		// Clear out current rules:
 		_.each(folder.__controllers, folder.remove, folder);
 		// Probably not supposed to touch __controllers, oops
 		folder.__controllers = [];
 
-		var models = JSON.parse(FractalViewer.LSModels_JSON);
-		var fractal = _.findWhere(models, { "name": preset });
-		// console.log(preset, fractal.rules);
-
 		// Create new rules from variables:
-		for (var rule in fractal.rules) {
-			if (_.has(fractal.rules, rule)) {
-				if (_.contains(fractal.variables, rule)) {
-					folder.add(fractal.rules, rule);
+		for (var rule in newFractal.rules) {
+			if (_.has(newFractal.rules, rule)) {
+				if (_.contains(newFractal.variables, rule)) {
+					folder.add(newFractal.rules, rule);
 				} else {
-					delete fractal.rules[rule];
+					delete newFractal.rules[rule];
 				}
 			}
 		}
 	}
 
-	function updateActionsFolder(folder, preset) {
+	function updateActionsFolder(folder) {
 		// Clear out current actions:
 		_.each(folder.__controllers, folder.remove, folder);
 		// Probably not supposed to touch __controllers, oops
 		folder.__controllers = [];
 
-		var models = JSON.parse(FractalViewer.LSModels_JSON);
-		var fractal = _.findWhere(models, { "name": preset });
-
 		var possibleActions = _.union(
-				fractal.variables.split(''),
-				fractal.constants.split('')
+				newFractal.variables.split(''),
+				newFractal.constants.split('')
 			).join('');
 
 		// Create new actions from variables and constants:
-		for (var action in fractal.actions) {
-			if (_.has(fractal.actions, action)) {
+		for (var action in newFractal.actions) {
+			if (_.has(newFractal.actions, action)) {
 				if (_.contains(possibleActions, action)) {
-					folder.add(fractal.actions, action);
+					folder.add(newFractal.actions, action);
 				} else {
-					delete fractal.actions[action];
+					delete newFractal.actions[action];
 				}
 			}
 		}
@@ -204,8 +148,6 @@ FractalViewer.initialize = function () {
 		preset: 'Dragon Curve'
 	});
 	editor.remember(newFractal);
-	// editor.revert();
-	// editor.save();
 	editor.add(newFractal, 'compile');
 	editor.add(newFractal, 'name');
 	editor.add(newFractal, 'variables').onChange(function (vars) {
@@ -220,7 +162,7 @@ FractalViewer.initialize = function () {
 				newFractal.rules[v] = "";
 			}
 		});
-		updateRulesFolder(rulesFolder, editor.preset);
+		updateRulesFolder(rulesFolder);
 
 		// Update Actions
 		var possibleActions = _.union(
@@ -234,7 +176,7 @@ FractalViewer.initialize = function () {
 			}
 		});
 
-		updateActionsFolder(actionsFolder, editor.preset);
+		updateActionsFolder(actionsFolder);
 	});
 
 	editor.add(newFractal, 'constants').onChange(function (constants) {
@@ -253,17 +195,17 @@ FractalViewer.initialize = function () {
 			}
 		});	
 
-		updateActionsFolder(actionsFolder, editor.preset);
+		updateActionsFolder(actionsFolder);
 	});
 
 	editor.add(newFractal, 'axiom');
 	// editor.add(newFractal, 'angle').min(0).max(360).step(1);
 
 	var rulesFolder = editor.addFolder('Rules');
-	updateRulesFolder(rulesFolder, editor.preset);
+	updateRulesFolder(rulesFolder);
 
 	var actionsFolder = editor.addFolder('Actions');
-	updateActionsFolder(actionsFolder, editor.preset);
+	updateActionsFolder(actionsFolder);
 };
 
 function makeGuiObjects(JSON) {
@@ -299,33 +241,18 @@ function makeGuiObjects(JSON) {
 
 window.addEventListener('load', function () {
 	var canvas = document.createElement('canvas');
-	FractalViewer.viewWidth = canvas.width = window.innerWidth;
-	FractalViewer.viewHeight = canvas.height = window.innerHeight;
-	FractalViewer.ctx = canvas.getContext('2d');
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
 	document.body.appendChild(canvas);
 
-    var zcanvas = document.createElement('canvas');
-    zcanvas.width = FractalViewer.viewWidth;
-    zcanvas.height = FractalViewer.viewHeight;
-    zcanvas.style.position = "absolute";
-    zcanvas.style.left = "0";
-    zcanvas.style.top = "0";
-    zcanvas.style.zIndex = -1;
-    FractalViewer.zctx = zcanvas.getContext('2d');
-    document.body.appendChild(zcanvas);
+	FractalViewer.ctx = canvas.getContext('2d');
 
 	// Load various L-S models
 	// dat.GUI doesn't support saving and loading folders
-	FractalViewer.LSModels_JSON = JSON.stringify(LSModels);
 	FractalViewer.guiState = makeGuiObjects(LSModels);
 
 	FractalViewer.initialize();
 
-	window.addEventListener('resize', function (e) {
-		FractalViewer.viewWidth = zcanvas.width = canvas.width = window.innerWidth;
-		FractalViewer.viewHeight = zcanvas.height = canvas.height = window.innerHeight;
-		// FractalViewer.model.render();
-	}, false);
 	canvas.addEventListener('mousedown', function (e) {
 		FractalViewer.dragging = true;
 		FractalViewer.mouseX = e.clientX;

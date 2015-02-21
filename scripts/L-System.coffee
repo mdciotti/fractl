@@ -10,6 +10,7 @@ class LS
 			lineColor: "#00ACED"
 			lineWidth: 2
 			zoom: 1
+			shrink: 1
 		}
 		@parameters = @options.parameters
 		@sequence = @parameters.axiom
@@ -27,11 +28,14 @@ class LS
 		"branch": (t, args) -> t.set()
 		"home": (t, args) -> t.home()
 
-	setContext: (@ctx) -> @
+	setContext: (@ctx) ->
+		@t = new Turtle(@ctx)
+		@
 
 	fold: () ->
 		seq = @sequence
 		i = 0
+		result = ""
 
 		if ++@iteration < @stack.length
 			# This iteration already exists, load it from the stack
@@ -49,8 +53,9 @@ class LS
 				rule = rule.replace /\s/g, ''
 				if _.isString rule
 					# Deterministic L-System
-					seq = seq.substring(0, i) + rule + seq.substring(i + 1)
-					i += rule.length
+					# seq = seq.substring(0, i) + rule + seq.substring(i + 1)
+					# i += rule.length
+					result += rule
 				else
 					# Stochastic L-System (probability)
 					total = 0
@@ -63,6 +68,8 @@ class LS
 							i += r.length
 							break
 			else
+				# No rule, don't replace character
+				result += seq[i]
 				# possibly a constant?
 				# throw new Error "No rule defined for variable '#{seq[i]}'"
 
@@ -101,8 +108,10 @@ class LS
 		# 		throw new Error("No rule defined for variable '" + seq[i] + "'");
 		# 	}
 		# }`
-		@stack.push seq
-		@sequence = seq
+		# @stack.push seq
+		# @sequence = seq
+		@stack.push result
+		@sequence = result
 		@
 
 	unfold: () ->
@@ -111,28 +120,30 @@ class LS
 
 	render: (ctx) ->
 		ctx = @ctx || ctx
-		t = new Turtle(ctx)
+		# @t = new Turtle(ctx)
+		@t.reset()
 
 		ctx.save()
 		ctx.fillStyle = @options.background
 		ctx.fillRect 0, 0, ctx.canvas.width, ctx.canvas.height
-		ctx.scale FractalViewer.zoom, FractalViewer.zoom
 		ctx.translate ctx.canvas.width / 2, ctx.canvas.height / 2
-		t.strokeStyle @options.lineColor
-		t.lineWidth @options.lineWidth
+		ctx.scale FractalViewer.zoom, FractalViewer.zoom
+		@t.strokeStyle @options.lineColor
+		@t.lineWidth @options.lineWidth
 		ctx.fillStyle = @options.foreground
 		ctx.translate FractalViewer.offsetX, FractalViewer.offsetY
 
-		t.begin()
+		@t.begin()
 		actions = @parameters.actions
 
 		for op in @sequence
 			if _.has actions, op
 				command = actions[op].split ' '
 				if _.has valid_actions, command[0]
-					valid_actions[command[0]].call @parameters, t, command
+					# console.log actions[op]
+					valid_actions[command[0]].call @parameters, @t, command
 
-		if @options.fill then t.fill() else t.stroke()
+		if @options.fill then @t.fill() else @t.stroke()
 
 		ctx.restore()
 		@
@@ -142,3 +153,12 @@ class LS
 
 	regress: () ->
 		@unfold().render()
+
+	resetViewport: (ctx) ->
+		ctx = @ctx || ctx
+		FractalViewer.zoom = 1
+		FractalViewer.offsetX = 0
+		FractalViewer.offsetY = 0
+		ctx.restore()
+		@render()
+		@

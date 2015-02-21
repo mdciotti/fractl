@@ -141,7 +141,7 @@ var LSModels = [
 		"actions": {
 			"F": "forward 10",
 			"+": "rotate 25",
-			"-": "rotate -12.5",
+			"-": "rotate -25",
 			"[": "branch",
 			"]": "home"
 		}
@@ -347,36 +347,6 @@ var LSModels = [
 			"F": "forward 10",
 			"+": "rotate 72",
 			"-": "rotate -72"
-		}
-	},
-	// {
-	// 	"name": "T-square",
-	// 	"variable": "SC",
-	// 	"constants": "F+-",
-	// 	"axiom": "AA+B+SS+SS",
-	// 	"rules": {
-	// 		"S": "S",
-	// 		"C": ""
-	// 	},
-	// 	"actions": {
-	// 		"+": "rotate 90",
-	// 		"-": "rotate -90",
-	// 		"F": "forward 10"
-	// 	}
-	// },
-	{
-		"name": "Y-square",
-		"variable": "LR",
-		"constants": "F+-",
-		"axiom": "-L",
-		"rules": {
-			"L": "LFLF+RFR+FLFL-FRF-LFL-FR+F+RF-LFL-FRFRFR+",
-			"R": "-LFLFLF+RFR+FL-F-LF+RFR+FLF+RFRF-LFL-FRFR"
-		},
-		"actions": {
-			"+": "rotate 90",
-			"-": "rotate -90",
-			"F": "forward 10"
 		}
 	},
 	{

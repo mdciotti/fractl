@@ -2,6 +2,10 @@
 
 class Turtle
 	constructor: (@ctx) ->
+		@reset()
+		# @ctx.beginPath()
+
+	reset: () ->
 		@x = 0
 		@y = 0
 		@ox = 0
@@ -11,7 +15,7 @@ class Turtle
 		@sin = -1
 		@pen = true
 		@homes = []
-		# @ctx.beginPath()
+		@size = 1
 
 	RAD = Math.PI / 180.0
 
@@ -31,12 +35,13 @@ class Turtle
 		@
 
 	set: () ->
-		@homes.push { x: @x, y: @y, angle: @dir }
+		@homes.push { x: @x, y: @y, angle: @dir, size: @size }
 		@
 
 	home: () ->
 		home = @homes.pop()
 		@dir = home.angle
+		@size = home.size
 		@jump home.x, home.y
 
 	angle: (deg) ->
